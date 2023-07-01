@@ -1,0 +1,89 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-4.5.1
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    bind-mount-options: /home/cloud/podman-kubernetes-setup/grafana/prometheus.yml:Z
+  creationTimestamp: "2023-07-01T22:22:59Z"
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  containers:
+  - image: docker.io/grafana/grafana:latest
+    name: grafana-container
+    ports:
+    - containerPort: 9090
+      hostPort: 9090
+    - containerPort: 9100
+      hostPort: 9100
+    securityContext:
+      runAsNonRoot: true
+    volumeMounts:
+    - mountPath: /etc/grafana/grafana.ini
+      name: home-cloud-podman-kubernetes-setup-grafana-grafana.ini-host-0
+    - mountPath: /var/lib/grafana
+      name: grafana_data-pvc
+  - args:
+    - --config.file=/etc/prometheus/prometheus.yaml
+    - --storage.tsdb.path=/prometheus
+    - --web.console.libraries=/etc/prometheus/console_libraries
+    - --web.console.templates=/etc/prometheus/consoles
+    - --web.enable-lifecycle
+    - --storage.tsdb.retention.time=90d
+    image: docker.io/prom/prometheus:latest
+    name: prometheus
+    securityContext: {}
+    volumeMounts:
+    - mountPath: /etc/prometheus/prometheus.yaml
+      name: home-cloud-podman-kubernetes-setup-grafana-prometheus.yml-host-0
+    - mountPath: /prometheus
+      name: prometheus_data-pvc
+  - args:
+    - --path.procfs=/host/proc
+    - --path.rootfs=/rootfs
+    - --path.sysfs=/host/sys
+    - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)(1748|/)
+    image: docker.io/prom/node-exporter:latest
+    name: node-exporter
+    securityContext: {}
+    volumeMounts:
+    - mountPath: /host/proc
+      name: proc-host-0
+      readOnly: true
+    - mountPath: /host/sys
+      name: sys-host-1
+      readOnly: true
+    - mountPath: /rootfs
+      name: root-host-2
+      readOnly: true
+  volumes:
+  - name: prometheus_data-pvc
+    persistentVolumeClaim:
+      claimName: prometheus_data
+  - hostPath:
+      path: /proc
+      type: Directory
+    name: proc-host-0
+  - hostPath:
+      path: /sys
+      type: Directory
+    name: sys-host-1
+  - hostPath:
+      path: /
+      type: Directory
+    name: root-host-2
+  - hostPath:
+      path: /home/cloud/podman-kubernetes-setup/grafana/grafana.ini
+      type: File
+    name: home-cloud-podman-kubernetes-setup-grafana-grafana.ini-host-0
+  - name: grafana_data-pvc
+    persistentVolumeClaim:
+      claimName: grafana_data
+  - hostPath:
+      path: /home/cloud/podman-kubernetes-setup/grafana/prometheus.yml
+      type: File
+    name: home-cloud-podman-kubernetes-setup-grafana-prometheus.yml-host-0

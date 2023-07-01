@@ -1,0 +1,31 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-4.5.1
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2023-07-01T20:36:25Z"
+  labels:
+    app: ddns
+  name: ddns
+spec:
+  containers:
+  - env:
+    - name: RRTYPE
+      value: A
+    envFrom:
+    - configMapRef:
+        name: ddns-config
+        optional: false
+    image: docker.io/oznu/cloudflare-ddns:latest
+    name: ddns-cloudflare-4
+  - env:
+    - name: RRTYPE
+      value: AAAA
+    envFrom:
+    - configMapRef:
+        name: ddns-config
+        optional: false
+    image: docker.io/oznu/cloudflare-ddns:latest
+    name: ddns-cloudflare-6

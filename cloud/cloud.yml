@@ -1,0 +1,57 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-4.5.1
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2023-07-01T17:18:31Z"
+  labels:
+    app: cloud
+  name: cloud
+spec:
+  containers:
+  - args:
+    - --transaction-isolation=READ-COMMITTED
+    - --binlog-format=ROW
+    envFrom:
+    - configMapRef:
+        name: nextcloud-db-config
+        optional: false
+    image: docker.io/library/mariadb:10.5
+    name: nextcloud-db
+    volumeMounts:
+    - mountPath: /var/lib/mysql
+      name: db-pvc
+  - args:
+    - redis-server
+    - --save
+    - "60"
+    - "1"
+    image: docker.io/library/redis:alpine
+    name: redis
+    volumeMounts:
+    - mountPath: /data
+      name: redisVol-pvc
+  - args:
+    - apache2-foreground
+    envFrom:
+    - configMapRef:
+        name: nextcloud-config
+        optional: false
+    image: docker.io/library/nextcloud:latest
+    name: nextcloud
+    volumeMounts:
+    - mountPath: /var/www/html
+      name: home-cloud-nas-nextcloud-host-0
+  volumes:
+  - name: db-pvc
+    persistentVolumeClaim:
+      claimName: db
+  - name: redisVol-pvc
+    persistentVolumeClaim:
+      claimName: redisVol
+  - hostPath:
+      path: /home/cloud/nas/nextcloud
+      type: Directory
+    name: home-cloud-nas-nextcloud-host-0

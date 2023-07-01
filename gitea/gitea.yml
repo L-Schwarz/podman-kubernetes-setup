@@ -1,0 +1,58 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-4.5.1
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2023-07-01T21:06:34Z"
+  labels:
+    app: gitea
+  name: gitea
+spec:
+  containers:
+  - args:
+    - mysqld
+    envFrom:
+    - configMapRef:
+        name: gitea-db-config
+        optional: false
+    image: docker.io/library/mysql:8
+    name: gitea-db
+    volumeMounts:
+    - mountPath: /var/lib/mysql
+      name: gitea-db-v-pvc
+  - args:
+    - /bin/s6-svscan
+    - /etc/s6
+    envFrom:
+    - configMapRef:
+        name: gitea-config
+        optional: false
+    image: docker.io/gitea/gitea:latest
+    name: gitea-container
+    volumeMounts:
+    - mountPath: /etc/localtime
+      name: etc-localtime-host-0
+      readOnly: true
+    - mountPath: /data
+      name: home-cloud-nas-gitea-host-1
+    - mountPath: /etc/timezone
+      name: etc-timezone-host-2
+      readOnly: true
+  volumes:
+  - name: gitea-db-v-pvc
+    persistentVolumeClaim:
+      claimName: gitea-db-v
+  - hostPath:
+      path: /etc/localtime
+      type: File
+    name: etc-localtime-host-0
+  - hostPath:
+      path: /home/cloud/nas/gitea
+      type: Directory
+    name: home-cloud-nas-gitea-host-1
+  - hostPath:
+      path: /etc/timezone
+      type: File
+    name: etc-timezone-host-2
