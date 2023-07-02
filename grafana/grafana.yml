@@ -23,8 +23,6 @@ spec:
     securityContext:
       runAsNonRoot: true
     volumeMounts:
-    - mountPath: /etc/grafana/grafana.ini
-      name: home-cloud-podman-kubernetes-setup-grafana-grafana.ini-host-0
     - mountPath: /var/lib/grafana
       name: grafana_data-pvc
   - args:
